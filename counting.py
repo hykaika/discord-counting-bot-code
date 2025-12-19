@@ -309,7 +309,7 @@ async def on_command_error(ctx, error):
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("Discord Counting Bot")
+    print("Discord Counting Bot made by hykaika")
     print("=" * 50)
     print("\n  WICHTIG: Bevor du startest:")
     print("1. Füge deinen Bot-Token ein (Zeile 6)")
@@ -325,4 +325,5 @@ if __name__ == '__main__':
         print(" FEHLER: Ungültiger Bot-Token!")
         print("Bitte überprüfe deinen Token in Zeile 6")
     except Exception as e:
+
         print(f" FEHLER: {e}")
