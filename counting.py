@@ -3,7 +3,7 @@ import re
 from discord.ext import commands
 
 
-TOKEN = DEIN-BOT-Token'
+TOKEN = 'DEIN-BOT-Token'
 
 
 COUNTING_CHANNEL_ID = CHANNEL-ID
@@ -327,3 +327,4 @@ if __name__ == '__main__':
     except Exception as e:
 
         print(f" FEHLER: {e}")
+
