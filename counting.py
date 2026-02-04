@@ -14,15 +14,15 @@ logger = logging.getLogger('CountingBot')
 if not os.path.exists("backups"):
     os.makedirs("backups")
 
+
 TOKEN = 'Bot-Token'
-COUNTING_CHANNEL_ID = Channel-ID
-GUILD_ID = Server-ID 
+COUNTING_CHANNEL_ID = channel-id
+GUILD_ID = server-id
 SAVE_FILE = "counting_save.json"
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
-
 
 class GameState:
     def __init__(self):
@@ -52,7 +52,6 @@ class GameState:
         self.total_mistakes = data.get("total_mistakes", 0)
 
 game_state = GameState()
-
 
 def save_game(custom_path=None):
     path = custom_path or SAVE_FILE
@@ -87,6 +86,16 @@ def calculate_expression(expr: str) -> Optional[int]:
         return None
     return None
 
+def is_counting_channel():
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if interaction.channel_id == COUNTING_CHANNEL_ID:
+            return True
+        await interaction.response.send_message(
+            f"❌ Dieser Command kann nur im Counting-Channel verwendet werden!", 
+            ephemeral=True
+        )
+        return False
+    return app_commands.check(predicate)
 
 class CountingBot(commands.Bot):
     def __init__(self):
@@ -104,12 +113,14 @@ bot = CountingBot()
 
 @bot.tree.command(name="ct", description="Löscht eine Anzahl an Nachrichten (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def clear_chat(interaction: discord.Interaction, anzahl: int):
     await interaction.response.send_message(f"🧹 Lösche {anzahl} Nachrichten...", ephemeral=True)
     await interaction.channel.purge(limit=anzahl)
 
 @bot.tree.command(name="set-count", description="Setzt den Zähler manuell auf eine Zahl (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def set_count(interaction: discord.Interaction, zahl: int):
     game_state.current_number = zahl
     game_state.last_user_id = None
@@ -118,6 +129,7 @@ async def set_count(interaction: discord.Interaction, zahl: int):
 
 @bot.tree.command(name="save-as", description="Speichert ein Backup des Spielstands (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def save_as(interaction: discord.Interaction, name: str):
     clean_name = "".join(x for x in name if x.isalnum())
     path = f"backups/{clean_name}.json"
@@ -128,6 +140,7 @@ async def save_as(interaction: discord.Interaction, name: str):
 
 @bot.tree.command(name="load-from", description="Lädt ein Backup (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def load_from(interaction: discord.Interaction, name: str):
     clean_name = "".join(x for x in name if x.isalnum())
     path = f"backups/{clean_name}.json"
@@ -139,6 +152,7 @@ async def load_from(interaction: discord.Interaction, name: str):
 
 @bot.tree.command(name="backups-list", description="Zeigt alle verfügbaren Backups (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def list_backups(interaction: discord.Interaction):
     files = [f.replace(".json", "") for f in os.listdir("backups") if f.endswith(".json")]
     if not files:
@@ -149,6 +163,7 @@ async def list_backups(interaction: discord.Interaction):
 
 @bot.tree.command(name="pause", description="Pausiert das Zählen (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def pause_game(interaction: discord.Interaction):
     game_state.is_paused = True
     save_game()
@@ -156,12 +171,14 @@ async def pause_game(interaction: discord.Interaction):
 
 @bot.tree.command(name="resume", description="Setzt das Zählen fort (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
+@is_counting_channel()
 async def resume_game(interaction: discord.Interaction):
     game_state.is_paused = False
     save_game()
     await interaction.response.send_message("▶️ Spiel fortgesetzt.", ephemeral=True)
 
 @bot.tree.command(name="stats", description="Zeigt den aktuellen Spielstand")
+@is_counting_channel()
 async def stats(interaction: discord.Interaction):
     embed = discord.Embed(title="📊 Counting Stats", color=discord.Color.gold(), timestamp=datetime.datetime.now())
     embed.add_field(name="Zähler", value=f"**{game_state.current_number}**", inline=True)
@@ -202,7 +219,6 @@ async def on_message(message: discord.Message):
         save_game()
         await message.add_reaction('✅')
     else:
-        
         game_state.current_number = 0
         game_state.last_user_id = None
         save_game()
